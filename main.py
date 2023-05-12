@@ -2,7 +2,7 @@ from flask_ngrok import run_with_ngrok
 from flask import Flask, render_template, request
 
 import torch
-from diffusers import StableDiffusionPipeline
+from diffusers import StableDiffusionPipeline, EulerDiscreteScheduler
 from transformers import T5Tokenizer, T5ForConditionalGeneration
 
 import base64
