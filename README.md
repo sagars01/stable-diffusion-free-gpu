@@ -1,1 +1,1 @@
-## A modular approach to GenAI using Hugging Face.
+## A modular approach to GenAI using microsoft/DialoGPT-small
