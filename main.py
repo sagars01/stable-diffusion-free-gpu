@@ -10,48 +10,56 @@ from io import BytesIO
 
 # Load model
 tokenizer = T5Tokenizer.from_pretrained("google/flan-t5-small")
-model = T5ForConditionalGeneration.from_pretrained("google/flan-t5-small").to("cuda")
+model = T5ForConditionalGeneration.from_pretrained(
+    "google/flan-t5-small").to("cuda")
 
-# pipe = StableDiffusionPipeline.from_pretrained("stabilityai/stable-diffusion-2-1-base", revision="fp16", torch_dtype=torch.float16)
-# pipe.to("cuda")
+pipe = StableDiffusionPipeline.from_pretrained(
+    "stabilityai/stable-diffusion-2-1-base", revision="fp16", torch_dtype=torch.float16)
+pipe.to("cuda")
 
 model_id = "stabilityai/stable-diffusion-2-1-base"
 
-scheduler = EulerDiscreteScheduler.from_pretrained(model_id, subfolder="scheduler")
-pipe = StableDiffusionPipeline.from_pretrained(model_id, scheduler=scheduler, torch_dtype=torch.float16)
+scheduler = EulerDiscreteScheduler.from_pretrained(
+    model_id, subfolder="scheduler")
+pipe = StableDiffusionPipeline.from_pretrained(
+    model_id, scheduler=scheduler, torch_dtype=torch.float16)
 pipe = pipe.to("cuda")
 
 # Start flask app and set to ngrok
 app = Flask(__name__)
 run_with_ngrok(app)
 
+
 @app.route('/')
 def initial():
-  return render_template('index.html')
+    return render_template('index.html')
 
 
 @app.route('/submit-prompt', methods=['POST'])
 def generate():
-  #get the prompt input
-  prompt = request.form['prompt-input']
-  print(f"Generating an image of {prompt}")
+    # get the prompt input
+    prompt = request.form['prompt-input']
+    print(f"Generating an image of {prompt}")
 
-  # generate image
-  image = pipe(prompt).images[0]
-  print("Image generated! Converting image ...")
-  buffered = BytesIO()
-  image.save(buffered, format="PNG")
-  img_str = base64.b64encode(buffered.getvalue())
-  img_str = "data:image/png;base64," + str(img_str)[2:-1]
+    # generate image
+    image = pipe(prompt).images[0]
+    print("Image generated! Converting image ...")
+    buffered = BytesIO()
+    image.save(buffered, format="PNG")
+    img_str = base64.b64encode(buffered.getvalue())
+    img_str = "data:image/png;base64," + str(img_str)[2:-1]
 
-  #generate text
-  input_ids = tokenizer(prompt, return_tensors="pt").input_ids.to("cuda")
-  generated_output = model.generate(input_ids, do_sample=True, temperature=1.0, max_length=2500, num_return_sequences=1)
-  generated_text = tokenizer.decode(generated_output[0], skip_special_tokens=True)
+    # generate text
+    input_ids = tokenizer(prompt, return_tensors="pt").input_ids.to("cuda")
+    generated_output = model.generate(
+        input_ids, do_sample=True, temperature=1.0, max_length=2500, num_return_sequences=1)
+    generated_text = tokenizer.decode(
+        generated_output[0], skip_special_tokens=True)
 
-  print("Sending image and text ...")
- 
-  return render_template('index.html', generated_image=img_str, generated_text=generated_text, prompt=prompt)
+    print("Sending image and text ...")
+
+    return render_template('index.html', generated_image=img_str, generated_text=generated_text, prompt=prompt)
+
 
 if __name__ == '__main__':
     app.run()
