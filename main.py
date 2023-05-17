@@ -9,9 +9,11 @@ import base64
 from io import BytesIO
 
 # Load model
-model_name = "microsoft/DialoGPT-small"
+# model_name = "microsoft/DialoGPT-small"
+model_name= "google/flan-t5-small";
 tokenizer = T5Tokenizer.from_pretrained(model_name)
 model = T5ForConditionalGeneration.from_pretrained(model_name).to("cuda")
+
 
 # pipe = StableDiffusionPipeline.from_pretrained("stabilityai/stable-diffusion-2-1-base", revision="fp16", torch_dtype=torch.float16)
 # pipe.to("cuda")
@@ -35,8 +37,7 @@ def initial():
 def generate():
   #get the prompt input
   prompt = request.form['prompt-input']
-  print(f"Generating an image of {prompt}")
-
+  print("Generating an text of {prompt}")
   # generate image
   # image = pipe(prompt).images[0]
   # print("Image generated! Converting image ...")
@@ -45,14 +46,18 @@ def generate():
   # img_str = base64.b64encode(buffered.getvalue())
   # img_str = "data:image/png;base64," + str(img_str)[2:-1]
 
-  #generate text
-  input_ids = tokenizer(prompt, return_tensors="pt").input_ids.to("cuda")
-  generated_output = model.generate(input_ids, do_sample=True, temperature=1.0, max_length=2500, num_return_sequences=1)
-  generated_text = tokenizer.decode(generated_output[0], skip_special_tokens=True)
+  # #generate text
+  # input_ids = tokenizer(prompt, return_tensors="pt").input_ids.to("cuda")
+  # generated_output = model.generate(input_ids, do_sample=True, temperature=1.0, max_length=2500, num_return_sequences=1)
+  # generated_text = tokenizer.decode(generated_output[0], skip_special_tokens=True)
+
+  input_ids = tokenizer(prompt, return_tensors="pt").input_ids
+
+  outputs = model.generate(input_ids)
 
   print("Sending image and text ...")
  
-  return render_template('index.html', generated_image="", generated_text=generated_text, prompt=prompt)
+  return render_template('index.html', generated_image="", generated_text=tokenizer.decode(outputs[0]), prompt=prompt)
 
 if __name__ == '__main__':
     app.run()
